@@ -1,4 +1,4 @@
-FROM bellsoft/liberica-openjdk-alpine:21 AS builder
+FROM bellsoft/liberica-openjdk-alpine:23 AS builder
 WORKDIR /bank-transaction
 COPY mvnw pom.xml /bank-transaction/
 COPY .mvn /bank-transaction/.mvn
@@ -6,7 +6,7 @@ COPY src /bank-transaction/src
 RUN chmod +x mvnw
 RUN ./mvnw -B package
 
-FROM bellsoft/liberica-openjdk-alpine:21
+FROM bellsoft/liberica-openjdk-alpine:23
 WORKDIR /bank-transaction
 RUN addgroup -S spring && adduser -S spring -G spring
 COPY --from=builder /bank-transaction/target/bank-transaction-0.0.1-SNAPSHOT.jar /bank-transaction
