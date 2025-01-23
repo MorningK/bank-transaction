@@ -3,6 +3,7 @@ WORKDIR /bank-transaction
 COPY mvnw pom.xml /bank-transaction/
 COPY .mvn /bank-transaction/.mvn
 COPY src /bank-transaction/src
+RUN chmod +x mvnw
 RUN ./mvnw -B package
 
 FROM bellsoft/liberica-openjdk-alpine:21
