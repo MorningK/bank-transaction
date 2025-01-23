@@ -13,7 +13,7 @@
   <version>0.0.1-SNAPSHOT</version>
   <name>bank-transaction</name>
   <description>Transaction Management of Bank</description>
-  <url />
+  <url>https://github.com/MorningK/bank-transaction.git</url>
   <licenses>
     <license />
   </licenses>
@@ -164,16 +164,8 @@
               <spaceBeforeCloseEmptyElement>true</spaceBeforeCloseEmptyElement>
             </sortPom>
           </pom>
-          <yaml>
-            <includes>
-              <include>src/**/*.yaml</include>
-              <include>.github/**/*.yaml</include>
-            </includes>
-            <jackson />
-          </yaml>
         </configuration>
       </plugin>
     </plugins>
   </build>
-
 </project>
