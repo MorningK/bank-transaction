@@ -65,7 +65,7 @@ public class TransactionServiceImpl implements TransactionService {
     transactionRepository.delete(transaction);
   }
 
-  private String generateCode() {
+  private synchronized String generateCode() {
     Lock lock = lockService.getLock("generateTransactionCode");
     try {
       lock.lock();

@@ -4,24 +4,35 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import io.github.mk.bank.transaction.exception.BackendException;
 import io.github.mk.bank.transaction.model.Transaction;
+import io.github.mk.bank.transaction.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.test.annotation.DirtiesContext;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest
 class TransactionServiceTest {
   @Autowired TransactionService transactionService;
+  @Autowired
+  TransactionRepository transactionRepository;
   Executor executor = Executors.newFixedThreadPool(10);
 
+  @Order(1)
   @Test
   @Transactional
   void crudTest() {
@@ -68,6 +79,7 @@ class TransactionServiceTest {
     assertEquals(createTransactionRequest.remark(), first.getRemark());
   }
 
+  @Order(2)
   @Test
   @Transactional
   void paginationTest() {
@@ -113,8 +125,10 @@ class TransactionServiceTest {
 
     assertEquals(total, all.size());
     assertEquals(total, all.stream().map(Transaction::getCode).distinct().count());
+    transactionRepository.deleteAll(all);
   }
 
+  @Order(3)
   @Test
   @Transactional
   void stressTest() {
