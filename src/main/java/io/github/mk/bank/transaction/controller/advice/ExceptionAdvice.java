@@ -9,7 +9,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class ExceptionAdvice {
   @ExceptionHandler
   public Response<?> handleValidationException(MethodArgumentNotValidException exception) {
-    return new Response<>(
-        BackendException.ErrorCode.BAD_REQUEST.getCode(), null, exception.getMessage());
+    String aggregatedErrors = exception.getBindingResult().getFieldErrors()
+      .stream()
+      .map(err -> err.getField() + " " + err.getDefaultMessage())
+      .collect(Collectors.joining("; "));
+    return new Response<>(BackendException.ErrorCode.BAD_REQUEST.getCode(), null, aggregatedErrors);
   }
 }
