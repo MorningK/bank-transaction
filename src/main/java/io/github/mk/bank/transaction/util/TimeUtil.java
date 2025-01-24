@@ -5,15 +5,14 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 public class TimeUtil {
-    public static final ZoneId DEFAULT_ZONE_ID = ZoneId.of("+08");
-    public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+  public static final ZoneId DEFAULT_ZONE_ID = ZoneId.of("+08");
+  public static final DateTimeFormatter DATE_TIME_FORMATTER =
+      DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
 
-    private TimeUtil() {
-    }
+  private TimeUtil() {}
 
-
-    public static String formatCurrentTimestamp() {
-        OffsetDateTime now = OffsetDateTime.now(DEFAULT_ZONE_ID);
-        return now.format(DATE_TIME_FORMATTER);
-    }
+  public static String formatCurrentTimestamp() {
+    OffsetDateTime now = OffsetDateTime.now(DEFAULT_ZONE_ID);
+    return now.format(DATE_TIME_FORMATTER);
+  }
 }

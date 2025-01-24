@@ -2,6 +2,7 @@ package io.github.mk.bank.transaction.controller;
 
 import io.github.mk.bank.transaction.model.Transaction;
 import io.github.mk.bank.transaction.service.TransactionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +24,7 @@ public class TransactionController {
   }
 
   @PostMapping("/")
-  public Transaction create(@RequestBody TransactionService.CreateTransactionRequest data) {
+  public Transaction create(@Valid @RequestBody TransactionService.CreateTransactionRequest data) {
     return transactionService.create(data);
   }
 }

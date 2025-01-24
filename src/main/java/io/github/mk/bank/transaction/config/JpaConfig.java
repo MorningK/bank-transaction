@@ -1,13 +1,12 @@
 package io.github.mk.bank.transaction.config;
 
+import static io.github.mk.bank.transaction.util.TimeUtil.DEFAULT_ZONE_ID;
+
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.util.Optional;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.auditing.DateTimeProvider;
-
-import static io.github.mk.bank.transaction.util.TimeUtil.DEFAULT_ZONE_ID;
 
 @Configuration
 public class JpaConfig {
