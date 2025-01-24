@@ -14,5 +14,8 @@ public interface TransactionService {
 
   Transaction create(CreateTransactionRequest data);
 
-  record CreateTransactionRequest(@NotNull @NotBlank @Pattern(regexp = "\\d+") String account, @NotNull @Positive Integer amount, @Nullable String remark) {}
+  record CreateTransactionRequest(
+      @NotNull @NotBlank @Pattern(regexp = "\\d+") String account,
+      @NotNull @Positive Integer amount,
+      @Nullable String remark) {}
 }
