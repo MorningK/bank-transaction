@@ -19,7 +19,7 @@ public class ExceptionAdvice {
 
   @ExceptionHandler
   public Response<?> handleBackendException(BackendException exception) {
-      return Response.of(exception);
+    return Response.of(exception);
   }
 
   @ExceptionHandler
