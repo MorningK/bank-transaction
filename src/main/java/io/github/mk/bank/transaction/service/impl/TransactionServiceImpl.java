@@ -89,7 +89,7 @@ public class TransactionServiceImpl implements TransactionService {
     try {
       lock.lock();
 
-      int randomCode = ATOMIC_INTEGER.getAndUpdate(x -> x >= MAX_CODE ? 0 : x + 1 );
+      int randomCode = ATOMIC_INTEGER.getAndUpdate(x -> x >= MAX_CODE ? 0 : x + 1);
       return formatCurrentTimestamp() + String.format("%3d", randomCode);
     } finally {
       lock.unlock();
