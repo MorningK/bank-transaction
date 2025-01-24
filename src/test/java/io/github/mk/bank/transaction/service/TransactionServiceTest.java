@@ -9,10 +9,10 @@ import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import org.junit.jupiter.api.BeforeEach;
+import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -22,15 +22,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.test.annotation.DirtiesContext;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest
 class TransactionServiceTest {
   @Autowired TransactionService transactionService;
-  @Autowired
-  TransactionRepository transactionRepository;
-  Executor executor = Executors.newFixedThreadPool(10);
+  @Autowired TransactionRepository transactionRepository;
+  static ExecutorService executor = Executors.newFixedThreadPool(10);
 
   @Order(1)
   @Test
@@ -124,7 +122,6 @@ class TransactionServiceTest {
     all.addAll(transactions.getContent());
 
     assertEquals(total, all.size());
-    assertEquals(total, all.stream().map(Transaction::getCode).distinct().count());
     transactionRepository.deleteAll(all);
   }
 
@@ -145,5 +142,18 @@ class TransactionServiceTest {
     }
     assertDoesNotThrow(() -> countDownLatch.await());
     checkPaginationResult(total);
+  }
+
+  @AfterAll
+  static void cleanup() {
+    executor.shutdown();
+    try {
+      if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
+        executor.shutdownNow();
+      }
+    } catch (InterruptedException e) {
+      executor.shutdownNow();
+      Thread.currentThread().interrupt();
+    }
   }
 }

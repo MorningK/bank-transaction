@@ -11,6 +11,9 @@ import jakarta.transaction.Transactional;
 import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -23,11 +26,13 @@ public class TransactionServiceImpl implements TransactionService {
   private final TransactionRepository transactionRepository;
   private final LockService lockService;
 
+  @Cacheable(cacheNames = "transactions")
   @Override
   public Page<Transaction> transactions(Pageable pageable) {
     return transactionRepository.findAll(pageable);
   }
 
+  @CacheEvict(cacheNames = "transactions", allEntries = true)
   @Override
   public Transaction create(CreateTransactionRequest data) {
     Transaction transaction =
@@ -40,6 +45,7 @@ public class TransactionServiceImpl implements TransactionService {
     return transactionRepository.save(transaction);
   }
 
+  @Cacheable(cacheNames = "transaction")
   @Override
   public Transaction findById(Long id) throws BackendException {
     return transactionRepository
@@ -50,6 +56,11 @@ public class TransactionServiceImpl implements TransactionService {
                     BackendException.ErrorCode.NOT_FOUND, "transaction not found"));
   }
 
+  @Caching(
+      evict = {
+        @CacheEvict(cacheNames = "transactions", allEntries = true),
+        @CacheEvict(cacheNames = "transaction", key = "#id")
+      })
   @Override
   public Transaction update(Long id, UpdateTransactionRequest data) throws BackendException {
     Transaction transaction = findById(id);
@@ -58,6 +69,11 @@ public class TransactionServiceImpl implements TransactionService {
     return transaction;
   }
 
+  @Caching(
+      evict = {
+        @CacheEvict(cacheNames = "transactions", allEntries = true),
+        @CacheEvict(cacheNames = "transaction", key = "#id")
+      })
   @Transactional
   @Override
   public void delete(Long id) throws BackendException {
