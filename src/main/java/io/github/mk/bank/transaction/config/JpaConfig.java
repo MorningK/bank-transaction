@@ -7,10 +7,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.auditing.DateTimeProvider;
 
+import static io.github.mk.bank.transaction.util.TimeUtil.DEFAULT_ZONE_ID;
+
 @Configuration
 public class JpaConfig {
-  private static final ZoneId DEFAULT_ZONE_ID = ZoneId.of("+08");
-
   @Bean
   public DateTimeProvider offsetDateTimeProvider() {
     return () -> Optional.of(OffsetDateTime.now(DEFAULT_ZONE_ID));
