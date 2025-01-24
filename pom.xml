@@ -119,19 +119,6 @@
         <groupId>org.asciidoctor</groupId>
         <artifactId>asciidoctor-maven-plugin</artifactId>
         <version>2.2.1</version>
-        <executions>
-          <execution>
-            <id>generate-docs</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>process-asciidoc</goal>
-            </goals>
-            <configuration>
-              <backend>html</backend>
-              <doctype>book</doctype>
-            </configuration>
-          </execution>
-        </executions>
         <dependencies>
           <dependency>
             <groupId>org.springframework.restdocs</groupId>
@@ -139,25 +126,34 @@
             <version>${spring-restdocs.version}</version>
           </dependency>
         </dependencies>
+        <executions>
+          <execution>
+            <id>generate-docs</id>
+            <goals>
+              <goal>process-asciidoc</goal>
+            </goals>
+            <phase>prepare-package</phase>
+            <configuration>
+              <backend>html</backend>
+              <doctype>book</doctype>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
         <executions>
           <execution>
             <id>copy-resources</id>
-            <phase>prepare-package</phase>
             <goals>
               <goal>copy-resources</goal>
             </goals>
+            <phase>prepare-package</phase>
             <configuration>
-              <outputDirectory>
-                ${project.build.outputDirectory}/static/docs
-              </outputDirectory>
+              <outputDirectory>${project.build.outputDirectory}/static/docs</outputDirectory>
               <resources>
                 <resource>
-                  <directory>
-                    ${project.build.directory}/generated-docs
-                  </directory>
+                  <directory>${project.build.directory}/generated-docs</directory>
                 </resource>
               </resources>
             </configuration>
