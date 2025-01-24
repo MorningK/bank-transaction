@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import io.github.mk.bank.transaction.exception.BackendException;
 import io.github.mk.bank.transaction.model.Transaction;
 import java.util.List;
+
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,6 +19,7 @@ class TransactionServiceTest {
   @Autowired TransactionService transactionService;
 
   @Test
+  @Transactional
   void crudTest() {
     Page<Transaction> transactions = transactionService.transactions(Pageable.unpaged());
     assertTrue(transactions.isEmpty());
@@ -62,6 +65,7 @@ class TransactionServiceTest {
   }
 
   @Test
+  @Transactional
   void paginationTest() {
     TransactionService.CreateTransactionRequest createTransactionRequest =
         new TransactionService.CreateTransactionRequest("1234567890", 100, "remark");
