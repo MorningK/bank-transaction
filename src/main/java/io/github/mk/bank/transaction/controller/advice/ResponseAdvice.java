@@ -19,7 +19,7 @@ public class ResponseAdvice extends AbstractMappingJacksonResponseBodyAdvice {
       ServerHttpResponse response) {
     Object value = bodyContainer.getValue();
     if (!(value instanceof Response)) {
-      bodyContainer.setValue(new Response<>("200", value, null));
+      bodyContainer.setValue(new Response<>(Response.SUCCESS_CODE, value, null));
     }
   }
 }

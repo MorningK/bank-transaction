@@ -4,20 +4,33 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import io.github.mk.bank.transaction.exception.BackendException;
 import io.github.mk.bank.transaction.model.Transaction;
-import java.util.List;
-
+import io.github.mk.bank.transaction.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest
 class TransactionServiceTest {
   @Autowired TransactionService transactionService;
+  @Autowired TransactionRepository transactionRepository;
+  static ExecutorService executor = Executors.newFixedThreadPool(10);
 
+  @Order(1)
   @Test
   @Transactional
   void crudTest() {
@@ -64,6 +77,7 @@ class TransactionServiceTest {
     assertEquals(createTransactionRequest.remark(), first.getRemark());
   }
 
+  @Order(2)
   @Test
   @Transactional
   void paginationTest() {
@@ -72,31 +86,74 @@ class TransactionServiceTest {
     for (int i = 0; i < 100; i++) {
       transactionService.create(createTransactionRequest);
     }
+    checkPaginationResult(100);
+  }
+
+  private void checkPaginationResult(int total) {
+    int totalPages = Math.ceilDiv(total, 10);
+    List<Transaction> all = new ArrayList<>(total);
     Pageable pageable = PageRequest.of(0, 10);
     Page<Transaction> transactions = transactionService.transactions(pageable);
-    assertEquals(100, transactions.getTotalElements());
-    assertEquals(10, transactions.getTotalPages());
+
+    assertEquals(total, transactions.getTotalElements());
+    assertEquals(totalPages, transactions.getTotalPages());
     assertEquals(10, transactions.getContent().size());
     assertTrue(transactions.isFirst());
     assertFalse(transactions.isLast());
     assertTrue(transactions.hasNext());
-    for (int i = 1; i < 9; i++) {
+    all.addAll(transactions.getContent());
+
+    for (int i = 1; i < totalPages - 1; i++) {
       pageable = PageRequest.of(i, 10);
       transactions = transactionService.transactions(pageable);
-      assertEquals(100, transactions.getTotalElements());
-      assertEquals(10, transactions.getTotalPages());
-      assertEquals(10, transactions.getContent().size());
       assertFalse(transactions.isFirst());
       assertFalse(transactions.isLast());
       assertTrue(transactions.hasNext());
+      all.addAll(transactions.getContent());
     }
-    pageable = PageRequest.of(9, 10);
+
+    pageable = PageRequest.of(totalPages - 1, 10);
     transactions = transactionService.transactions(pageable);
-    assertEquals(100, transactions.getTotalElements());
-    assertEquals(10, transactions.getTotalPages());
+    assertEquals(total, transactions.getTotalElements());
     assertEquals(10, transactions.getContent().size());
     assertFalse(transactions.isFirst());
     assertTrue(transactions.isLast());
     assertFalse(transactions.hasNext());
+    all.addAll(transactions.getContent());
+
+    assertEquals(total, all.size());
+    transactionRepository.deleteAll(all);
+  }
+
+  @Order(3)
+  @Test
+  @Transactional
+  void stressTest() {
+    TransactionService.CreateTransactionRequest createTransactionRequest =
+        new TransactionService.CreateTransactionRequest("1234567890", 100, "remark");
+    int total = 1000;
+    CountDownLatch countDownLatch = new CountDownLatch(total);
+    for (int i = 0; i < total; i++) {
+      executor.execute(
+          () -> {
+            transactionService.create(createTransactionRequest);
+            countDownLatch.countDown();
+          });
+    }
+    assertDoesNotThrow(() -> countDownLatch.await());
+    checkPaginationResult(total);
+  }
+
+  @AfterAll
+  static void cleanup() {
+    executor.shutdown();
+    try {
+      if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
+        executor.shutdownNow();
+      }
+    } catch (InterruptedException e) {
+      executor.shutdownNow();
+      Thread.currentThread().interrupt();
+    }
   }
 }

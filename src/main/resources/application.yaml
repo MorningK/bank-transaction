@@ -1,3 +1,7 @@
 spring:
   application:
     name: "bank-transaction"
+  cache:
+    type: CAFFEINE
+    caffeine:
+      spec: "maximumSize=102400,expireAfterWrite=60m"
