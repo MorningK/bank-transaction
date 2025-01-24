@@ -4,6 +4,7 @@ import io.github.mk.bank.transaction.exception.BackendException;
 import jakarta.annotation.Nullable;
 
 public record Response<T>(String code, @Nullable T data, @Nullable String message) {
+  public static final String SUCCESS_CODE ="200";
   public static Response<?> of(BackendException exception) {
     return new Response<>(exception.getCode(), null, exception.getMessage());
   }
