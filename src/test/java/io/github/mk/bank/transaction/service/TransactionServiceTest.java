@@ -4,9 +4,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import io.github.mk.bank.transaction.exception.BackendException;
 import io.github.mk.bank.transaction.model.Transaction;
-import java.util.List;
-
 import jakarta.transaction.Transactional;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 @SpringBootTest
 class TransactionServiceTest {
   @Autowired TransactionService transactionService;
+  Executor executor = Executors.newFixedThreadPool(10);
 
   @Test
   @Transactional
@@ -72,6 +76,11 @@ class TransactionServiceTest {
     for (int i = 0; i < 100; i++) {
       transactionService.create(createTransactionRequest);
     }
+    checkPaginationResult();
+  }
+
+  private void checkPaginationResult() {
+    List<Transaction> all = new ArrayList<>(100);
     Pageable pageable = PageRequest.of(0, 10);
     Page<Transaction> transactions = transactionService.transactions(pageable);
     assertEquals(100, transactions.getTotalElements());
@@ -80,6 +89,7 @@ class TransactionServiceTest {
     assertTrue(transactions.isFirst());
     assertFalse(transactions.isLast());
     assertTrue(transactions.hasNext());
+    all.addAll(transactions.getContent());
     for (int i = 1; i < 9; i++) {
       pageable = PageRequest.of(i, 10);
       transactions = transactionService.transactions(pageable);
@@ -89,6 +99,7 @@ class TransactionServiceTest {
       assertFalse(transactions.isFirst());
       assertFalse(transactions.isLast());
       assertTrue(transactions.hasNext());
+      all.addAll(transactions.getContent());
     }
     pageable = PageRequest.of(9, 10);
     transactions = transactionService.transactions(pageable);
@@ -98,5 +109,24 @@ class TransactionServiceTest {
     assertFalse(transactions.isFirst());
     assertTrue(transactions.isLast());
     assertFalse(transactions.hasNext());
+    all.addAll(transactions.getContent());
+    assertEquals(100, all.size());
+    assertEquals(100, all.stream().map(Transaction::getCode).distinct().count());
+  }
+
+  @Test
+  @Transactional
+  void stressTest() {
+    TransactionService.CreateTransactionRequest createTransactionRequest =
+        new TransactionService.CreateTransactionRequest("1234567890", 100, "remark");
+    CountDownLatch countDownLatch = new CountDownLatch(100);
+    for (int i = 0; i < 100; i++) {
+      executor.execute(
+          () -> {
+            transactionService.create(createTransactionRequest);
+            countDownLatch.countDown();
+          });
+    }
+    assertDoesNotThrow(() -> countDownLatch.await());
   }
 }
