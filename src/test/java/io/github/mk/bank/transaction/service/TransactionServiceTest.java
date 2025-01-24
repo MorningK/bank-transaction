@@ -76,42 +76,43 @@ class TransactionServiceTest {
     for (int i = 0; i < 100; i++) {
       transactionService.create(createTransactionRequest);
     }
-    checkPaginationResult();
+    checkPaginationResult(100);
   }
 
-  private void checkPaginationResult() {
-    List<Transaction> all = new ArrayList<>(100);
+  private void checkPaginationResult(int total) {
+    int totalPages = Math.ceilDiv(total, 10);
+    List<Transaction> all = new ArrayList<>(total);
     Pageable pageable = PageRequest.of(0, 10);
     Page<Transaction> transactions = transactionService.transactions(pageable);
-    assertEquals(100, transactions.getTotalElements());
-    assertEquals(10, transactions.getTotalPages());
+
+    assertEquals(total, transactions.getTotalElements());
+    assertEquals(totalPages, transactions.getTotalPages());
     assertEquals(10, transactions.getContent().size());
     assertTrue(transactions.isFirst());
     assertFalse(transactions.isLast());
     assertTrue(transactions.hasNext());
     all.addAll(transactions.getContent());
-    for (int i = 1; i < 9; i++) {
+
+    for (int i = 1; i < totalPages - 1; i++) {
       pageable = PageRequest.of(i, 10);
       transactions = transactionService.transactions(pageable);
-      assertEquals(100, transactions.getTotalElements());
-      assertEquals(10, transactions.getTotalPages());
-      assertEquals(10, transactions.getContent().size());
       assertFalse(transactions.isFirst());
       assertFalse(transactions.isLast());
       assertTrue(transactions.hasNext());
       all.addAll(transactions.getContent());
     }
-    pageable = PageRequest.of(9, 10);
+
+    pageable = PageRequest.of(totalPages - 1, 10);
     transactions = transactionService.transactions(pageable);
-    assertEquals(100, transactions.getTotalElements());
-    assertEquals(10, transactions.getTotalPages());
+    assertEquals(total, transactions.getTotalElements());
     assertEquals(10, transactions.getContent().size());
     assertFalse(transactions.isFirst());
     assertTrue(transactions.isLast());
     assertFalse(transactions.hasNext());
     all.addAll(transactions.getContent());
-    assertEquals(100, all.size());
-    assertEquals(100, all.stream().map(Transaction::getCode).distinct().count());
+
+    assertEquals(total, all.size());
+    assertEquals(total, all.stream().map(Transaction::getCode).distinct().count());
   }
 
   @Test
@@ -119,8 +120,9 @@ class TransactionServiceTest {
   void stressTest() {
     TransactionService.CreateTransactionRequest createTransactionRequest =
         new TransactionService.CreateTransactionRequest("1234567890", 100, "remark");
-    CountDownLatch countDownLatch = new CountDownLatch(100);
-    for (int i = 0; i < 100; i++) {
+    int total = 1000;
+    CountDownLatch countDownLatch = new CountDownLatch(total);
+    for (int i = 0; i < total; i++) {
       executor.execute(
           () -> {
             transactionService.create(createTransactionRequest);
@@ -128,5 +130,6 @@ class TransactionServiceTest {
           });
     }
     assertDoesNotThrow(() -> countDownLatch.await());
+    checkPaginationResult(total);
   }
 }
