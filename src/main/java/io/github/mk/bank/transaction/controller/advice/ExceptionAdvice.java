@@ -16,4 +16,14 @@ public class ExceptionAdvice {
             .collect(Collectors.joining("; "));
     return new Response<>(BackendException.ErrorCode.BAD_REQUEST.getCode(), null, aggregatedErrors);
   }
+
+  @ExceptionHandler
+  public Response<?> handleBackendException(BackendException exception) {
+      return Response.of(exception);
+  }
+
+  @ExceptionHandler
+  public Response<?> handleRuntimeException(RuntimeException exception) {
+    return Response.of(exception);
+  }
 }

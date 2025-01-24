@@ -1,5 +1,6 @@
 package io.github.mk.bank.transaction.service;
 
+import io.github.mk.bank.transaction.exception.BackendException;
 import io.github.mk.bank.transaction.model.Transaction;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
@@ -14,8 +15,16 @@ public interface TransactionService {
 
   Transaction create(CreateTransactionRequest data);
 
+  Transaction findById(Long id) throws BackendException;
+
+  Transaction update(Long id, UpdateTransactionRequest data) throws BackendException;
+
+  void delete(Long id) throws BackendException;
+
   record CreateTransactionRequest(
       @NotNull @NotBlank @Pattern(regexp = "\\d+") String account,
       @NotNull @Positive Integer amount,
       @Nullable String remark) {}
+
+  record UpdateTransactionRequest(@Nullable String remark) {}
 }

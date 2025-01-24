@@ -2,10 +2,12 @@ package io.github.mk.bank.transaction.service.impl;
 
 import static io.github.mk.bank.transaction.util.TimeUtil.formatCurrentTimestamp;
 
+import io.github.mk.bank.transaction.exception.BackendException;
 import io.github.mk.bank.transaction.model.Transaction;
 import io.github.mk.bank.transaction.repository.TransactionRepository;
 import io.github.mk.bank.transaction.service.LockService;
 import io.github.mk.bank.transaction.service.TransactionService;
+import jakarta.transaction.Transactional;
 import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,31 @@ public class TransactionServiceImpl implements TransactionService {
             .remark(data.remark())
             .build();
     return transactionRepository.save(transaction);
+  }
+
+  @Override
+  public Transaction findById(Long id) throws BackendException {
+    return transactionRepository
+        .findById(id)
+        .orElseThrow(
+            () ->
+                new BackendException(
+                    BackendException.ErrorCode.NOT_FOUND, "transaction not found"));
+  }
+
+  @Override
+  public Transaction update(Long id, UpdateTransactionRequest data) throws BackendException {
+    Transaction transaction = findById(id);
+    transaction.setRemark(data.remark());
+    transaction = transactionRepository.save(transaction);
+    return transaction;
+  }
+
+  @Transactional
+  @Override
+  public void delete(Long id) throws BackendException {
+    Transaction transaction = findById(id);
+    transactionRepository.delete(transaction);
   }
 
   private String generateCode() {
