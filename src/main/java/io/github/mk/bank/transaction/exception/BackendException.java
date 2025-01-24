@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class BackendException {
+public class BackendException extends Exception {
   private final String code;
   private final String message;
 

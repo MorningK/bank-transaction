@@ -14,6 +14,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Builder
@@ -36,6 +37,8 @@ public class Transaction {
   private Integer amount;
 
   @CreatedDate private OffsetDateTime createdAt;
+
+  @LastModifiedDate private OffsetDateTime updatedAt;
 
   @Nullable private String remark;
 }
