@@ -1,7 +1,7 @@
 package io.github.mk.bank.transaction.controller.advice;
 
 import io.github.mk.bank.transaction.exception.BackendException;
-import jakarta.annotation.Nullable;
+import org.springframework.lang.Nullable;
 
 public record Response<T>(String code, @Nullable T data, @Nullable String message) {
   public static final String SUCCESS_CODE = "200";
