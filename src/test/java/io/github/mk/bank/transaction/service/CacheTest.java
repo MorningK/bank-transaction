@@ -40,22 +40,25 @@ class CacheTest {
               return result;
             });
 
-    assertTrue(transactionService.transactions(Pageable.unpaged()).isEmpty());
-    Mockito.verify(transactionRepository, Mockito.times(1)).findAll(Pageable.unpaged());
-    assertTrue(transactionService.transactions(Pageable.unpaged()).isEmpty());
-    Mockito.verify(transactionRepository, Mockito.times(1)).findAll(Pageable.unpaged());
+    testQueryUsingCache();
 
-    TransactionService.CreateTransactionRequest createTransactionRequest =
-        new TransactionService.CreateTransactionRequest("1234567890", 100, "remark");
-    Transaction transaction = transactionService.create(createTransactionRequest);
-    assertTrue(transactionService.transactions(Pageable.unpaged()).isEmpty());
-    Mockito.verify(transactionRepository, Mockito.times(2)).findAll(Pageable.unpaged());
-    Mockito.when(transactionRepository.findById(transaction.getId()))
-        .thenReturn(Optional.of(transaction));
-    assertEquals(
-        transaction, assertDoesNotThrow(() -> transactionService.findById(transaction.getId())));
-    Mockito.verify(transactionRepository, Mockito.times(0)).findById(transaction.getId());
+    Transaction transaction = createAndPutCache();
 
+    Transaction updated = updateAndPutCache(transaction);
+
+    deleteAndEvictCache(updated);
+  }
+
+  private void deleteAndEvictCache(Transaction updated) {
+    assertDoesNotThrow(() -> transactionService.delete(updated.getId()));
+    assertTrue(transactionService.transactions(Pageable.unpaged()).isEmpty());
+    Mockito.verify(transactionRepository, Mockito.times(4)).findAll(Pageable.unpaged());
+    Mockito.when(transactionRepository.findById(updated.getId())).thenReturn(Optional.empty());
+    assertThrows(BackendException.class, () -> transactionService.findById(updated.getId()));
+    Mockito.verify(transactionRepository, Mockito.times(1)).findById(updated.getId());
+  }
+
+  private Transaction updateAndPutCache(Transaction transaction) {
     Transaction updated =
         assertDoesNotThrow(
             () ->
@@ -67,12 +70,27 @@ class CacheTest {
     Mockito.when(transactionRepository.findById(updated.getId())).thenReturn(Optional.of(updated));
     assertEquals(updated, assertDoesNotThrow(() -> transactionService.findById(updated.getId())));
     Mockito.verify(transactionRepository, Mockito.times(0)).findById(updated.getId());
+    return updated;
+  }
 
-    assertDoesNotThrow(() -> transactionService.delete(updated.getId()));
+  private Transaction createAndPutCache() {
+    TransactionService.CreateTransactionRequest createTransactionRequest =
+        new TransactionService.CreateTransactionRequest("1234567890", 100, "remark");
+    Transaction transaction = transactionService.create(createTransactionRequest);
     assertTrue(transactionService.transactions(Pageable.unpaged()).isEmpty());
-    Mockito.verify(transactionRepository, Mockito.times(4)).findAll(Pageable.unpaged());
-    Mockito.when(transactionRepository.findById(updated.getId())).thenReturn(Optional.empty());
-    assertThrows(BackendException.class, () -> transactionService.findById(updated.getId()));
-    Mockito.verify(transactionRepository, Mockito.times(1)).findById(updated.getId());
+    Mockito.verify(transactionRepository, Mockito.times(2)).findAll(Pageable.unpaged());
+    Mockito.when(transactionRepository.findById(transaction.getId()))
+        .thenReturn(Optional.of(transaction));
+    assertEquals(
+        transaction, assertDoesNotThrow(() -> transactionService.findById(transaction.getId())));
+    Mockito.verify(transactionRepository, Mockito.times(0)).findById(transaction.getId());
+    return transaction;
+  }
+
+  private void testQueryUsingCache() {
+    assertTrue(transactionService.transactions(Pageable.unpaged()).isEmpty());
+    Mockito.verify(transactionRepository, Mockito.times(1)).findAll(Pageable.unpaged());
+    assertTrue(transactionService.transactions(Pageable.unpaged()).isEmpty());
+    Mockito.verify(transactionRepository, Mockito.times(1)).findAll(Pageable.unpaged());
   }
 }
