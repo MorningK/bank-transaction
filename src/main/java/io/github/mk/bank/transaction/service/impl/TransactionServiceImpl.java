@@ -12,13 +12,17 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class TransactionServiceImpl implements TransactionService {
@@ -32,10 +36,12 @@ public class TransactionServiceImpl implements TransactionService {
   @Cacheable(cacheNames = "transactions")
   @Override
   public Page<Transaction> transactions(Pageable pageable) {
+    log.info("[transactions] {}", pageable);
     return transactionRepository.findAll(pageable);
   }
 
   @CacheEvict(cacheNames = "transactions", allEntries = true)
+  @CachePut(cacheNames = "transaction", key = "#result.id")
   @Override
   public Transaction create(CreateTransactionRequest data) {
     Transaction transaction =
@@ -51,6 +57,7 @@ public class TransactionServiceImpl implements TransactionService {
   @Cacheable(cacheNames = "transaction")
   @Override
   public Transaction findById(Long id) throws BackendException {
+    log.info("[findById] {}", id);
     return transactionRepository
         .findById(id)
         .orElseThrow(
@@ -59,14 +66,12 @@ public class TransactionServiceImpl implements TransactionService {
                     BackendException.ErrorCode.NOT_FOUND, "transaction not found"));
   }
 
-  @Caching(
-      evict = {
-        @CacheEvict(cacheNames = "transactions", allEntries = true),
-        @CacheEvict(cacheNames = "transaction", key = "#id")
-      })
+  @CacheEvict(cacheNames = "transactions", allEntries = true)
+  @CachePut(cacheNames = "transaction", key = "#result.id")
   @Override
   public Transaction update(Long id, UpdateTransactionRequest data) throws BackendException {
-    Transaction transaction = findById(id);
+    TransactionService transactionService = (TransactionService) AopContext.currentProxy();
+    Transaction transaction = transactionService.findById(id);
     transaction.setRemark(data.remark());
     transaction = transactionRepository.save(transaction);
     return transaction;
@@ -80,7 +85,8 @@ public class TransactionServiceImpl implements TransactionService {
   @Transactional
   @Override
   public void delete(Long id) throws BackendException {
-    Transaction transaction = findById(id);
+    TransactionService transactionService = (TransactionService) AopContext.currentProxy();
+    Transaction transaction = transactionService.findById(id);
     transactionRepository.delete(transaction);
   }
 
