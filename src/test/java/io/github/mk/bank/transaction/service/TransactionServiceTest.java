@@ -28,7 +28,7 @@ import org.springframework.data.domain.Pageable;
 class TransactionServiceTest {
   @Autowired TransactionService transactionService;
   @Autowired TransactionRepository transactionRepository;
-  static ExecutorService executor = Executors.newFixedThreadPool(10);
+  static ExecutorService executor = Executors.newFixedThreadPool(100);
 
   @Order(1)
   @Test
@@ -122,6 +122,7 @@ class TransactionServiceTest {
     all.addAll(transactions.getContent());
 
     assertEquals(total, all.size());
+    assertEquals(total, all.stream().map(Transaction::getCode).distinct().count());
     transactionRepository.deleteAll(all);
   }
 
@@ -131,7 +132,7 @@ class TransactionServiceTest {
   void stressTest() {
     TransactionService.CreateTransactionRequest createTransactionRequest =
         new TransactionService.CreateTransactionRequest("1234567890", 100, "remark");
-    int total = 1000;
+    int total = 10000;
     CountDownLatch countDownLatch = new CountDownLatch(total);
     for (int i = 0; i < total; i++) {
       executor.execute(

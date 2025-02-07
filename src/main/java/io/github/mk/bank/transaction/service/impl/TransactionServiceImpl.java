@@ -9,6 +9,7 @@ import io.github.mk.bank.transaction.service.LockService;
 import io.github.mk.bank.transaction.service.TransactionService;
 import jakarta.transaction.Transactional;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -22,6 +23,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class TransactionServiceImpl implements TransactionService {
   private static final Random RANDOM = new Random();
+  private static final AtomicInteger ATOMIC_INTEGER = new AtomicInteger(0);
+  private static final Integer MAX_CODE = 999;
 
   private final TransactionRepository transactionRepository;
   private final LockService lockService;
@@ -81,15 +84,13 @@ public class TransactionServiceImpl implements TransactionService {
     transactionRepository.delete(transaction);
   }
 
-  private synchronized String generateCode() {
+  private String generateCode() {
     Lock lock = lockService.getLock("generateTransactionCode");
     try {
       lock.lock();
-      StringBuilder code = new StringBuilder(formatCurrentTimestamp());
-      for (int i = 0; i < 4; i++) {
-        code.append(RANDOM.nextInt(10));
-      }
-      return code.toString();
+
+      int randomCode = ATOMIC_INTEGER.getAndUpdate(x -> x >= MAX_CODE ? 0 : x + 1);
+      return formatCurrentTimestamp() + String.format("%3d", randomCode);
     } finally {
       lock.unlock();
     }
